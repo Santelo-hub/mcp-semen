@@ -2,8 +2,8 @@ name: Deploy
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -11,14 +11,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # DEBUG: проверим, что секреты реально приходят в раннер
+      - name: Debug secrets (safe)
+        run: |
+          echo "HOST=${{ secrets.SSH_HOST }}"
+          echo "USER=${{ secrets.SSH_USER }}"
+          echo "PORT=${{ secrets.SSH_PORT }}"
+          echo "KEY_START=$(echo '${{ secrets.SSH_KEY }}' | head -n1)"
+          echo "KEY_END=$(echo '${{ secrets.SSH_KEY }}' | tail -n1)"
+          echo "KEY_LEN=$(echo '${{ secrets.SSH_KEY }}' | wc -c)"
+
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: 207.154.216.202
-          username: root
-          port: 22
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          port: ${{ secrets.SSH_PORT }}
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd /home/ubuntu/apps/mcp-semen
-            docker-compose pull
-            docker-compose up -d --build
+            docker compose pull || docker-compose pull
+            docker compose up -d --build || docker-compose up -d --build
