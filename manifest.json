@@ -1,0 +1,18 @@
+{
+  "name": "mcp-semen",
+  "description": "Custom MCP server that forwards requests to n8n",
+  "version": "1.0.0",
+  "tools": [
+    {
+      "name": "action",
+      "description": "Forward request to n8n and return response",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "ping": { "type": "string" }
+        },
+        "required": ["ping"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+const http = require('http');
+const PORT = process.env.PORT || 3005;
+
+const server = http.createServer((req, res) => {
+  if (req.url === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ ok: true }));
+  }
+
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('🚀 MCP-Semen работает!\n');
+});
+
+server.listen(PORT, () => {
+  console.log(`✅ MCP-Semen слушает на порту ${PORT}`);
+});
+app.get('/mcp/manifest.json',(req,res)=>res.sendFile(process.cwd() + '/manifest.json'));

@@ -1,0 +1,74 @@
+import express from "express";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const app = express();
+app.use(express.json({ limit: "5mb" }));
+
+// CORS для дашборда Retell (безопасно для наших тестов)
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
+
+const TOKEN = process.env.MCP_TOKEN || "";
+function checkToken(req, res, next) {
+  if (!TOKEN) return next();
+  const t = req.get("x-mcp-token") || req.query.token;
+  if (t !== TOKEN) return res.status(401).json({ ok: false, error: "unauthorized" });
+  next();
+}
+
+// Загружаем manifest.json из файла
+function loadManifest() {
+  const p = path.join(__dirname, "manifest.json");
+  const raw = fs.readFileSync(p, "utf8");
+  return JSON.parse(raw);
+}
+
+function sendManifest(res) {
+  res.type("application/json");
+  res.sendFile(path.join(__dirname, "manifest.json"));
+}
+
+// Health (оба пути)
+app.get("/health", (_req, res) => res.json({ ok: true }));
+app.get("/mcp/health", (_req, res) => res.json({ ok: true }));
+
+// Manifest (оба пути)
+app.get("/manifest.json", (_req, res) => sendManifest(res));
+app.get("/mcp/manifest.json", (_req, res) => sendManifest(res));
+
+// *** Новый эндпоинт: список tools (ожидает Retell) ***
+app.get("/tools", (_req, res) => {
+  const m = loadManifest();
+  res.json({ tools: m.tools || [] });
+});
+app.get("/mcp/tools", (_req, res) => {
+  const m = loadManifest();
+  res.json({ tools: m.tools || [] });
+});
+
+// Action (оба пути) — эхо для теста
+app.post("/action", checkToken, (req, res) => {
+  return res.json({
+    ok: true,
+    received_at: new Date().toISOString(),
+    payload: req.body
+  });
+});
+app.post("/mcp/action", checkToken, (req, res) => {
+  return res.json({
+    ok: true,
+    received_at: new Date().toISOString(),
+    payload: req.body
+  });
+});
+
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log(`MCP up on ${port}`));
