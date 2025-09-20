@@ -10,17 +10,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Write private key from base64
-        run: |
-          echo "${{ secrets.DEPLOY_KEY_B64 }}" | base64 -d > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
-
+      # никаких key_path и /tmp – отдаём ключ прямо из секрета
       - name: Copy project to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key_path: /tmp/deploy_key
+          key: ${{ secrets.DEPLOY_KEY }}
           port: ${{ secrets.SSH_PORT }}
           source: "."
           target: "/home/deploy/apps/mcp-semen"
@@ -32,7 +28,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key_path: /tmp/deploy_key
+          key: ${{ secrets.DEPLOY_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
             set -e
