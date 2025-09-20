@@ -1,8 +1,6 @@
 name: Deploy
-
 on:
-  push:
-    branches: [ "main" ]
+  push: { branches: [ "main" ] }
   workflow_dispatch:
 
 jobs:
@@ -10,16 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      # DEBUG: проверим, что секреты реально приходят в раннер
-      - name: Debug secrets (safe)
-        run: |
-          echo "HOST=${{ secrets.SSH_HOST }}"
-          echo "USER=${{ secrets.SSH_USER }}"
-          echo "PORT=${{ secrets.SSH_PORT }}"
-          echo "KEY_START=$(echo '${{ secrets.SSH_KEY }}' | head -n1)"
-          echo "KEY_END=$(echo '${{ secrets.SSH_KEY }}' | tail -n1)"
-          echo "KEY_LEN=$(echo '${{ secrets.SSH_KEY }}' | wc -c)"
 
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.2.0
@@ -29,6 +17,14 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /home/ubuntu/apps/mcp-semen
+            set -e
+            cd /home/ubuntu/apps/mcp-semen || cd /home/ubuntu
             docker compose pull || docker-compose pull
             docker compose up -d --build || docker-compose up -d --build
+            echo "---- docker ps ----"
+            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            echo "---- health ----"
+            curl -fsSIL https://sntl.online >/dev/null
+            # если проксируешь n8n на корень — этот эндпоинт тоже должен вернуть 200
+            curl -fsSIL https://sntl.online/healthz >/dev/null || true
+            echo "OK"
