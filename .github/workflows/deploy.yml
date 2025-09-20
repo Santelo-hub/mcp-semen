@@ -31,7 +31,8 @@ jobs:
           script: |
             set -e
             cd /home/deploy/apps/mcp-semen
-            if [ ! -f .env ] && [ -f /root/mcp-semen/.env ]; then cp /root/mcp-semen/.env .env; fi
+            # если .env отсутствует — подтягиваем из секретов deploy
+            [ -f .env ] || cp /home/deploy/secrets/mcp-semen.env .env
             docker compose down || true
             docker compose up -d --build
             docker image prune -f || true
