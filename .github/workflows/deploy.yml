@@ -1,39 +1,24 @@
-name: Deploy mcp-semen
+name: Deploy
+
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # никаких key_path и /tmp – отдаём ключ прямо из секрета
-      - name: Copy project to server
-        uses: appleboy/scp-action@v0.1.7
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          source: "."
-          target: "/home/deploy/apps/mcp-semen"
-          overwrite: true
-          rm: true
-
-      - name: Build & restart via docker compose
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          port: ${{ secrets.SSH_PORT }}
+          host: 207.154.216.202
+          username: root
+          port: 22
+          key: ${{ secrets.SSH_KEY }}
           script: |
-            set -e
-            cd /home/deploy/apps/mcp-semen
-            [ -f .env ] || cp /home/deploy/secrets/mcp-semen.env .env
-            docker compose down || true
-            docker compose up -d --build
-            docker image prune -f || true
+            cd /home/ubuntu/apps/mcp-semen
+            docker-compose pull
+            docker-compose up -d --build
