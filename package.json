@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node tests/ttn1_parser.test.js",
+    "ttn1:parse": "node bin/ttn1_parse.js"
   },
   "keywords": [],
   "author": "",
